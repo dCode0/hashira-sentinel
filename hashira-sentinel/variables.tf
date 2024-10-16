@@ -40,3 +40,9 @@ variable "enable_solution_microsoft_defender_for_cloud" {
   type        = bool
   default     = true
 }
+
+variable "enable_solution_threat_intelligence" {
+  description = "Enable Threat Intelligence Solution in Sentinel. Default is false."
+  type        = bool
+  default     = true
+}
