@@ -46,3 +46,14 @@ variable "enable_solution_threat_intelligence" {
   type        = bool
   default     = true
 }
+
+variable "default_tags" {
+  description = "Resources tags"
+  type        = map(string)
+  default = {
+    name       = "hashira-sentinel"
+    project    = "secu8090"
+    billing    = "conestoga"
+    managed_by = "terraform"
+  }
+}
