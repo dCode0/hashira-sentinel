@@ -25,7 +25,7 @@ resource "azurerm_sentinel_log_analytics_workspace_onboarding" "secu8090" {
 }
 
 resource "azurerm_log_analytics_solution" "secu8090" {
-  solution_name         = "hashira-sentinel-AzureActivity"
+  solution_name         = "AzureActivity"
   location              = azurerm_resource_group.secu8090.location
   resource_group_name   = azurerm_resource_group.secu8090.name
   workspace_resource_id = azurerm_log_analytics_workspace.secu8090.id
