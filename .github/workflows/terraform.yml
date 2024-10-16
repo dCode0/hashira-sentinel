@@ -6,12 +6,12 @@ on:
       - main
       - SECU8090-Sentinel_SIEM
     paths:
-      - hashira-sentinel/**
+      - hashira-sentinel/*
   pull_request:
     branches:
       - main
     paths:
-      - hashira-sentinel/**
+      - hashira-sentinel/*
 
 #Special permissions required for OIDC authentication
 permissions:
