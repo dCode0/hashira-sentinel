@@ -1,14 +1,14 @@
-# resource "azurerm_resource_group" "secu8090" {
-#   name     = "hashira-sentinel"
-#   location = "Canada Central"
-#
-#   tags = {
-#     name       = "hashira-sentinel"
-#     project    = "secu8090"
-#     billing    = "conestoga"
-#     managed_by = "terraform"
-#   }
-# }
+resource "azurerm_resource_group" "secu8090" {
+  name     = "hashira-sentinel-test"
+  location = "Canada Central"
+
+  tags = {
+    name       = "hashira-sentinel"
+    project    = "secu8090"
+    billing    = "conestoga"
+    managed_by = "terraform"
+  }
+}
 
 # resource "azurerm_log_analytics_workspace" "secu8090" {
 #   name                = "secu8090-law"
