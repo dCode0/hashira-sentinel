@@ -84,3 +84,34 @@ resource "azurerm_sentinel_data_connector_microsoft_threat_intelligence" "exampl
   log_analytics_workspace_id                   = azurerm_sentinel_log_analytics_workspace_onboarding.secu8090.workspace_id
   microsoft_emerging_threat_feed_lookback_date = "1970-01-01T00:00:00Z"
 }
+
+# Enable Threat Intelligence Solution in Sentinel
+module "mod_threat_intelligence" {
+  depends_on = [azurerm_sentinel_log_analytics_workspace_onboarding.secu8090]
+  source     = "azurenoops/overlays-arm-deployment/azurerm//modules/azure_arm_deployment/resource_group"
+  version    = "~> 1.0"
+  count      = var.enable_sentinel && var.enable_solution_threat_intelligence ? 1 : 0
+
+  name                = "deploy_threat_intelligence_solution"
+  resource_group_name = azurerm_resource_group.secu8090.name
+  deployment_mode     = var.deployment_mode
+  deploy_environment  = var.deploy_environment
+  workload_name       = "solutions"
+
+  arm_script = file("${path.module}/sentinel/threat_intelligence.json")
+
+  parameters_override = {
+    "workspaceName" = azurerm_log_analytics_workspace.secu8090.name
+    "location"      = azurerm_resource_group.secu8090.location
+  }
+}
+
+resource "azurerm_sentinel_data_connector_threat_intelligence_taxii" "secu8090" {
+  name                       = "hashira-threat-taxii-connector"
+  log_analytics_workspace_id = azurerm_sentinel_log_analytics_workspace_onboarding.secu8090.workspace_id
+  display_name               = "hashira-taxii"
+  api_root_url               = "https://pulsedive.com/taxii2/api/"
+  collection_id              = "a5cffbfe-c0ff-4842-a235-cb3a7a040a37"
+  user_name                  = "taxii2"
+  password                   = "2f628278aa92e25a13db7f1d130cdf572e72806b7b753bb18caab3f297ec6c93"
+}
