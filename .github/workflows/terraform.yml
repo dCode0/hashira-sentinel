@@ -145,7 +145,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: tfplan
-          path: hashira-sentinel/tfplan
+          path: .
 
       # Terraform Apply
       - name: Terraform Apply
