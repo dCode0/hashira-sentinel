@@ -12,7 +12,6 @@ terraform {
     storage_account_name = "hashirasecurity"
     container_name       = "tfstate"
     key                  = "terraform.tfstate"
-    # use_oidc             = true
   }
 }
 
