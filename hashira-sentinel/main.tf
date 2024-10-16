@@ -87,10 +87,10 @@ resource "azurerm_sentinel_data_connector_microsoft_threat_intelligence" "exampl
 
 # Enable Threat Intelligence Solution in Sentinel
 module "mod_threat_intelligence" {
-  depends_on = [ azurerm_sentinel_log_analytics_workspace_onboarding.secu8090 ]
-  source  = "azurenoops/overlays-arm-deployment/azurerm//modules/azure_arm_deployment/resource_group"
-  version = "~> 1.0"
-  count   = var.enable_sentinel && var.enable_solution_threat_intelligence ? 1 : 0
+  depends_on = [azurerm_sentinel_log_analytics_workspace_onboarding.secu8090]
+  source     = "azurenoops/overlays-arm-deployment/azurerm//modules/azure_arm_deployment/resource_group"
+  version    = "~> 1.0"
+  count      = var.enable_sentinel && var.enable_solution_threat_intelligence ? 1 : 0
 
   name                = "deploy_threat_intelligence_solution"
   resource_group_name = azurerm_resource_group.secu8090.name
