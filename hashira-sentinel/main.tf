@@ -37,6 +37,22 @@ resource "azurerm_log_analytics_solution" "secu8090" {
   }
 }
 
+resource "azurerm_log_analytics_solution" "secu8090_insights" {
+  solution_name         = "SecurityInsights"
+  location              = azurerm_resource_group.secu8090.location
+  resource_group_name   = azurerm_resource_group.secu8090.name
+  workspace_resource_id = azurerm_log_analytics_workspace.secu8090.id
+  workspace_name        = azurerm_log_analytics_workspace.secu8090.name
+
+  plan {
+    publisher = "Microsoft"
+    product   = "OMSGallery/SecurityInsights"
+  }
+
+  tags = var.default_tags
+
+}
+
 # Enable Sentinel Training Lab Solution
 module "mod_training_lab" {
   depends_on = [azurerm_sentinel_log_analytics_workspace_onboarding.secu8090]
@@ -109,7 +125,7 @@ module "mod_threat_intelligence" {
 resource "azurerm_sentinel_data_connector_threat_intelligence_taxii" "secu8090" {
   name                       = "hashira-threat-taxii-connector"
   log_analytics_workspace_id = azurerm_sentinel_log_analytics_workspace_onboarding.secu8090.workspace_id
-  display_name               = "hashira-taxii"
+  display_name               = "taxii2"
   api_root_url               = "https://pulsedive.com/taxii2/api/"
   collection_id              = "a5cffbfe-c0ff-4842-a235-cb3a7a040a37"
   user_name                  = "taxii2"
