@@ -112,4 +112,6 @@ resource "azurerm_sentinel_data_connector_threat_intelligence_taxii" "secu8090" 
   display_name               = "hashira-taxii"
   api_root_url               = "https://pulsedive.com/taxii2/api/"
   collection_id              = "a5cffbfe-c0ff-4842-a235-cb3a7a040a37"
+  user_name                  = "taxii2"
+  password                   = "2f628278aa92e25a13db7f1d130cdf572e72806b7b753bb18caab3f297ec6c93"
 }
