@@ -18,6 +18,8 @@ permissions:
   id-token: write
   contents: read
   pull-requests: write
+  issues: write
+
 
 #These environment variables are used by the terraform azure provider to setup OIDD authenticate.
 env:
@@ -114,22 +116,22 @@ jobs:
         run: |
           echo "$SUMMARY" >> $GITHUB_STEP_SUMMARY
 
-      # If this is a PR post the changes
-      - name: Push Terraform Output to PR
-        if: github.ref != 'refs/heads/main'
-        uses: actions/github-script@v7
-        env:
-          SUMMARY: "${{ steps.tf-plan-string.outputs.summary }}"
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const body = `${process.env.SUMMARY}`;
-            github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: body
-            })
+#      # If this is a PR post the changes
+#      - name: Push Terraform Output to PR
+#        if: github.ref != 'refs/heads/main'
+#        uses: actions/github-script@v7
+#        env:
+#          SUMMARY: "${{ steps.tf-plan-string.outputs.summary }}"
+#        with:
+#          github-token: ${{ secrets.GITHUB_TOKEN }}
+#          script: |
+#            const body = `${process.env.SUMMARY}`;
+#            github.rest.issues.createComment({
+#                issue_number: context.issue.number,
+#                owner: context.repo.owner,
+#                repo: context.repo.repo,
+#                body: body
+#            })
 
 #  terraform-apply:
 #    name: 'Terraform Apply'
