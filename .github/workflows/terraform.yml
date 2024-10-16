@@ -43,6 +43,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # azure/login GitHub Action allows you to authenticate with Azure using a service principal
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       # Install the latest version of the Terraform CLI
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
