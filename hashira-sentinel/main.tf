@@ -39,10 +39,10 @@ resource "azurerm_log_analytics_solution" "secu8090" {
 
 # Enable Sentinel Training Lab Solution
 module "mod_training_lab" {
-  depends_on = [ azurerm_sentinel_log_analytics_workspace_onboarding.secu8090 ]
-  source  = "azurenoops/overlays-arm-deployment/azurerm//modules/azure_arm_deployment/resource_group"
-  version = "~> 1.0"
-  count   = var.enable_sentinel && var.enable_solution_training_lab ? 1 : 0
+  depends_on = [azurerm_sentinel_log_analytics_workspace_onboarding.secu8090]
+  source     = "azurenoops/overlays-arm-deployment/azurerm//modules/azure_arm_deployment/resource_group"
+  version    = "~> 1.0"
+  count      = var.enable_sentinel && var.enable_solution_training_lab ? 1 : 0
 
   name                = "hashira-sentinel-training-lab-content-solution"
   resource_group_name = azurerm_resource_group.secu8090.name
@@ -91,5 +91,5 @@ variable "deployment_mode" {
 variable "deploy_environment" {
   description = "Name of the workload's environnement (dev, test, prod, etc). This will be used to name the resources deployed by this module. default is 'dev'"
   type        = string
-  default = "production"
+  default     = "production"
 }
