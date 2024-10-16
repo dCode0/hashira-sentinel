@@ -105,3 +105,11 @@ module "mod_threat_intelligence" {
     "location"      = azurerm_resource_group.secu8090.location
   }
 }
+
+resource "azurerm_sentinel_data_connector_threat_intelligence_taxii" "secu8090" {
+  name                       = "hashira-threat-taxii-connector"
+  log_analytics_workspace_id = azurerm_sentinel_log_analytics_workspace_onboarding.secu8090.workspace_id
+  display_name               = "hashira-taxii"
+  api_root_url               = "https://pulsedive.com/taxii2/api/"
+  collection_id              = "a5cffbfe-c0ff-4842-a235-cb3a7a040a37"
+}
