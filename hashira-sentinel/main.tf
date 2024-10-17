@@ -37,20 +37,34 @@ resource "azurerm_log_analytics_solution" "secu8090" {
   }
 }
 
-resource "azurerm_log_analytics_solution" "secu8090_insights" {
-  solution_name         = "SecurityInsights"
-  location              = azurerm_resource_group.secu8090.location
-  resource_group_name   = azurerm_resource_group.secu8090.name
-  workspace_resource_id = azurerm_log_analytics_workspace.secu8090.id
-  workspace_name        = azurerm_log_analytics_workspace.secu8090.name
-
-  plan {
-    publisher = "Microsoft"
-    product   = "OMSGallery/SecurityInsights"
-  }
-
-  tags = var.default_tags
-
+resource "azurerm_sentinel_alert_rule_scheduled" "secu8090_suspicious" {
+  name                       = "Suspicious Resource deployment Alert"
+  description                = "Identifies when a rare Resource and ResourceGroup deployment occurs by a previously unseen caller."
+  log_analytics_workspace_id = azurerm_sentinel_log_analytics_workspace_onboarding.secu8090.workspace_id
+  display_name               = "Suspicious Resource deployment Alert"
+  severity                   = "Low"
+  query                      = <<QUERY
+AzureActivity |
+  // Add or remove operation names below as per your requirements. For operations lists, please refer to https://learn.microsoft.com/en-us/Azure/role-based-access-control/resource-provider-operations#all
+  let szOperationNames = dynamic(["Microsoft.Compute/virtualMachines/write", "Microsoft.Resources/deployments/write", "Microsoft.Resources/subscriptions/resourceGroups/write"]);
+  let starttime = 14d;
+  let endtime = 1d;
+  let RareCaller = AzureActivity
+  | where TimeGenerated between (ago(starttime) .. ago(endtime))
+  | where OperationNameValue in~ (szOperationNames)
+  | summarize count() by CallerIpAddress, Caller, OperationNameValue, bin(TimeGenerated,1d)
+  // Returns all the records from the right side that don't have matches from the left.
+  | join kind=rightantisemi (
+  AzureActivity
+  | where TimeGenerated > ago(endtime)
+  | where OperationNameValue in~ (szOperationNames)
+  | summarize StartTimeUtc = min(TimeGenerated), EndTimeUtc = max(TimeGenerated), ActivityTimeStamp = make_set(TimeGenerated,100), ActivityStatusValue = make_set(ActivityStatusValue,100), CorrelationIds = make_set(CorrelationId,100), ResourceGroups = make_set(ResourceGroup,100), ResourceIds = make_set(_ResourceId,100), ActivityCountByCallerIPAddress = count()
+  by CallerIpAddress, Caller, OperationNameValue) on CallerIpAddress, Caller, OperationNameValue;
+  RareCaller
+  | extend Name = iif(Caller has '@',tostring(split(Caller,'@',0)[0]),"")
+  | extend UPNSuffix = iif(Caller has '@',tostring(split(Caller,'@',1)[0]),"")
+  | extend AadUserId = iif(Caller !has '@',Caller,"")
+QUERY
 }
 
 # Enable Sentinel Training Lab Solution
@@ -122,12 +136,12 @@ module "mod_threat_intelligence" {
   }
 }
 
-resource "azurerm_sentinel_data_connector_threat_intelligence_taxii" "secu8090" {
-  name                       = "hashira-threat-taxii-connector"
-  log_analytics_workspace_id = azurerm_sentinel_log_analytics_workspace_onboarding.secu8090.workspace_id
-  display_name               = "taxii2"
-  api_root_url               = "https://pulsedive.com/taxii2/api/"
-  collection_id              = "a5cffbfe-c0ff-4842-a235-cb3a7a040a37"
-  user_name                  = "taxii2"
-  password                   = "2f628278aa92e25a13db7f1d130cdf572e72806b7b753bb18caab3f297ec6c93"
-}
+# resource "azurerm_sentinel_data_connector_threat_intelligence_taxii" "secu8090" {
+#   name                       = "hashira-threat-taxii-connector"
+#   log_analytics_workspace_id = azurerm_sentinel_log_analytics_workspace_onboarding.secu8090.workspace_id
+#   display_name               = "taxii2"
+#   api_root_url               = "https://pulsedive.com/taxii2/api/"
+#   collection_id              = "a5cffbfe-c0ff-4842-a235-cb3a7a040a37"
+#   user_name                  = "taxii2"
+#   password                   = "2f628278aa92e25a13db7f1d130cdf572e72806b7b753bb18caab3f297ec6c93"
+# }
