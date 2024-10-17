@@ -37,21 +37,43 @@ resource "azurerm_log_analytics_solution" "secu8090" {
   }
 }
 
-resource "azurerm_log_analytics_solution" "secu8090_insights" {
-  solution_name         = "SecurityInsights"
-  location              = azurerm_resource_group.secu8090.location
-  resource_group_name   = azurerm_resource_group.secu8090.name
-  workspace_resource_id = azurerm_log_analytics_workspace.secu8090.id
-  workspace_name        = azurerm_log_analytics_workspace.secu8090.name
+resource "azurerm_sentinel_alert_rule_scheduled" "secu8090_suspicious" {
+  name                       = "Suspicious Resource deployment Alert"
+  description                = "Identifies when a rare Resource and ResourceGroup deployment occurs by a previously unseen caller."
+  log_analytics_workspace_id = azurerm_sentinel_log_analytics_workspace_onboarding.secu8090.workspace_id
+  display_name               = "Suspicious Resource deployment Alert"
+  severity                   = "Low"
+  tactics = [
+    "Impact",
+    "InitialAccess",
+  ]
+  techniques = [
+    "T1078",
+    "T1496",
+  ]
 
-  plan {
-    publisher = "Microsoft"
-    product   = "OMSGallery/SecurityInsights"
+  event_grouping {
+    aggregation_method = "SingleAlert"
   }
 
-  tags = var.default_tags
-
+  query = <<QUERY
+AzureActivity
+| where TimeGenerated between (ago(14d) .. ago(1d))
+| where OperationNameValue in~ ("Microsoft.Compute/virtualMachines/write", "Microsoft.Resources/deployments/write", "Microsoft.Resources/subscriptions/resourceGroups/write")
+| summarize count() by CallerIpAddress, Caller, OperationNameValue, bin(TimeGenerated, 1d)
+| join kind=rightantisemi (
+    AzureActivity
+    | where TimeGenerated > ago(1d)
+    | where OperationNameValue in~ ("Microsoft.Compute/virtualMachines/write", "Microsoft.Resources/deployments/write", "Microsoft.Resources/subscriptions/resourceGroups/write")
+    | summarize StartTimeUtc = min(TimeGenerated), EndTimeUtc = max(TimeGenerated), ActivityTimeStamp = make_set(TimeGenerated, 100), ActivityStatusValue = make_set(ActivityStatusValue, 100), CorrelationIds = make_set(CorrelationId, 100), ResourceGroups = make_set(ResourceGroup, 100), ResourceIds = make_set(_ResourceId, 100), ActivityCountByCallerIPAddress = count()
+    by CallerIpAddress, Caller, OperationNameValue
+) on CallerIpAddress, Caller, OperationNameValue
+| extend Name = iif(Caller has '@', tostring(split(Caller, '@', 0)), "")
+| extend UPNSuffix = iif(Caller has '@', tostring(split(Caller, '@', 1)), "")
+| extend AadUserId = iif(Caller !has '@', Caller, "")
+QUERY
 }
+
 
 # Enable Sentinel Training Lab Solution
 module "mod_training_lab" {
@@ -120,14 +142,4 @@ module "mod_threat_intelligence" {
     "workspaceName" = azurerm_log_analytics_workspace.secu8090.name
     "location"      = azurerm_resource_group.secu8090.location
   }
-}
-
-resource "azurerm_sentinel_data_connector_threat_intelligence_taxii" "secu8090" {
-  name                       = "hashira-threat-taxii-connector"
-  log_analytics_workspace_id = azurerm_sentinel_log_analytics_workspace_onboarding.secu8090.workspace_id
-  display_name               = "taxii2"
-  api_root_url               = "https://pulsedive.com/taxii2/api/"
-  collection_id              = "a5cffbfe-c0ff-4842-a235-cb3a7a040a37"
-  user_name                  = "taxii2"
-  password                   = "2f628278aa92e25a13db7f1d130cdf572e72806b7b753bb18caab3f297ec6c93"
 }
