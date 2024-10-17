@@ -43,7 +43,20 @@ resource "azurerm_sentinel_alert_rule_scheduled" "secu8090_suspicious" {
   log_analytics_workspace_id = azurerm_sentinel_log_analytics_workspace_onboarding.secu8090.workspace_id
   display_name               = "Suspicious Resource deployment Alert"
   severity                   = "Low"
-  query                      = <<QUERY
+  tactics = [
+    "Impact",
+    "InitialAccess",
+  ]
+  techniques = [
+    "T1078",
+    "T1496",
+  ]
+
+  event_grouping {
+    aggregation_method = "SingleAlert"
+  }
+
+  query = <<QUERY
 AzureActivity
 | where TimeGenerated between (ago(14d) .. ago(1d))
 | where OperationNameValue in~ ("Microsoft.Compute/virtualMachines/write", "Microsoft.Resources/deployments/write", "Microsoft.Resources/subscriptions/resourceGroups/write")
@@ -140,3 +153,36 @@ module "mod_threat_intelligence" {
 #   user_name                  = "taxii2"
 #   password                   = "2f628278aa92e25a13db7f1d130cdf572e72806b7b753bb18caab3f297ec6c93"
 # }
+
+resource "azurerm_sentinel_automation_rule" "secu8090" {
+  name                       = "56094f72-ac3f-40e7-a0c0-47bd95f70336"
+  log_analytics_workspace_id = azurerm_sentinel_log_analytics_workspace_onboarding.secu8090.workspace_id
+  display_name               = "Sign-ins from IPs that attempt sign-ins to disabled accounts"
+  order                      = 1
+
+  condition_json = jsonencode([
+    {
+      property : "IncidentProvider",
+      operator : "equals",
+      value : "All"
+    },
+    {
+      property : "AnalyticRuleName",
+      operator : "contains",
+      value : "Sign-ins from IPs that attempt sign-ins to disabled accounts"
+    },
+    {
+      property : "IPAddress",
+      operator : "equals",
+      value : "175.45.176.99"
+    }
+  ])
+
+  action_incident {
+    order                  = 1
+    status                 = "Closed"
+    classification         = "BenignPositive_SuspiciousButExpected"
+    classification_comment = "Suspicious but expected"
+    # description            = "Incident closed as benign positive."
+  }
+}
